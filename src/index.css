@@ -252,3 +252,146 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* Page Card Layout (Horizontal) */
+.page-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+  cursor: grab;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  background-color: white;
+}
+
+.page-card:active {
+  cursor: grabbing;
+}
+
+.page-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+  background-color: #f9fafb;
+}
+
+.page-number {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--primary);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-top-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+
+.grip-icon {
+  width: 20px;
+  height: 20px;
+  color: #d1d5db;
+  flex-shrink: 0;
+}
+
+.thumbnail-container {
+  width: 80px;
+  height: 100px;
+  flex-shrink: 0;
+  background: #f8fafc;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumbnail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.page-info-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.page-meta {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.remove-page-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 14px;
+  background: white;
+  border: 1px solid #fee2e2;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s, background-color 0.2s;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.page-card:hover .remove-page-btn {
+  opacity: 1;
+}
+
+.remove-page-btn:hover {
+  background: #fee2e2;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #f1f5f9;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+

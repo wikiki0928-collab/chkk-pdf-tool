@@ -213,11 +213,12 @@ function App() {
 
           {!files.length ? (
             <div className="dropzone" onDragOver={(e) => e.preventDefault()} onDrop={handleFileDrop} onClick={() => document.getElementById('file-input').click()}>
-              <input id="file-input" type="file" multiple={mode === 'imageToPdf'} accept={mode === 'imageToPdf' ? "image/*" : ".pdf"} className="hidden" onChange={handleFileSelect} />
+              <input id="file-input" type="file" multiple={mode === 'imageToPdf'} accept={mode === 'imageToPdf' ? "image/*" : ".pdf"} className="hidden" onChange={handleFileSelect} onClick={(e) => e.stopPropagation()} />
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 bg-[#e9f7f1] rounded-full flex items-center justify-center mb-6">
                   <FileUp className="text-[#29b27a] w-8 h-8" />
                 </div>
+
                 <h3 className="text-xl font-bold mb-2">{mode === 'pdfToImage' ? 'Upload your PDF' : 'Upload your images'}</h3>
                 <p className="text-slate-500 text-sm">Drag and drop or click to browse</p>
               </div>
@@ -225,15 +226,16 @@ function App() {
           ) : mode === 'imageToPdf' && (
             <div className="flex justify-center mb-8">
               <button 
-                onClick={() => document.getElementById('file-input').click()}
-                className="flex items-center gap-2 px-6 py-3 bg-slate-50 hover:bg-slate-100 border border-dashed border-slate-300 rounded-xl text-slate-600 text-sm font-bold transition-all"
+                onClick={() => document.getElementById('file-input-more').click()}
+                className="btn-secondary"
               >
                 <FileUp className="w-4 h-4" />
                 Add More Images
-                <input id="file-input" type="file" multiple accept="image/*" className="hidden" onChange={handleFileSelect} />
+                <input id="file-input-more" type="file" multiple accept="image/*" className="hidden" onChange={handleFileSelect} onClick={(e) => e.stopPropagation()} />
               </button>
             </div>
           )}
+
 
 
           <AnimatePresence>
@@ -257,21 +259,22 @@ function App() {
                     <p className="text-xs text-slate-400 font-bold mb-4 uppercase tracking-wider">Drag cards to reorder pages</p>
                     <Reorder.Group axis="y" values={files} onReorder={setFiles} className="space-y-4">
                       {files.map((f, index) => (
-                        <Reorder.Item key={f.id} value={f} className="page-card !flex-row !items-center !gap-6">
-                          <div className="page-number !relative !top-0 !left-0">{index + 1}</div>
-                          <GripVertical className="w-5 h-5 text-slate-300 shrink-0" />
-                          <div className="w-24 h-32 shrink-0 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
-                            {f.preview && <img src={f.preview} className="w-full h-full object-cover" alt="preview" />}
+                        <Reorder.Item key={f.id} value={f} className="page-card">
+                          <div className="page-number">{index + 1}</div>
+                          <GripVertical className="grip-icon" />
+                          <div className="thumbnail-container">
+                            {f.preview && <img src={f.preview} className="thumbnail-img" alt="preview" />}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="page-name !text-left !text-sm !font-bold !text-slate-800">{f.file.name}</div>
-                            <div className="text-[11px] text-slate-400 mt-1 uppercase font-bold tracking-tight">Page {index + 1} • {(f.file.size / 1024 / 1024).toFixed(2)} MB</div>
+                          <div className="page-info-container">
+                            <div className="page-name">{f.file.name}</div>
+                            <div className="page-meta">Page {index + 1} • {(f.file.size / 1024 / 1024).toFixed(2)} MB</div>
                           </div>
-                          <button onClick={(e) => { e.stopPropagation(); removeFile(f.id); }} className="remove-page-btn !opacity-100 !relative !top-0 !right-0">
+                          <button onClick={(e) => { e.stopPropagation(); removeFile(f.id); }} className="remove-page-btn">
                             <X className="w-4 h-4" />
                           </button>
                         </Reorder.Item>
                       ))}
+
                     </Reorder.Group>
                   </div>
                 ) : (
