@@ -5,7 +5,6 @@ import {
   Sparkles, CheckCircle2, AlertCircle, Trash2, 
   FileText, LayoutDashboard, History, Zap, GripVertical 
 } from 'lucide-react'
-
 import confetti from 'canvas-confetti'
 import { jsPDF } from 'jspdf'
 import * as pdfjsLib from 'pdfjs-dist'
@@ -15,13 +14,12 @@ import JSZip from 'jszip'
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
 
 function App() {
-  const [mode, setMode] = useState('pdfToImage') // Default: PDF to Image
+  const [mode, setMode] = useState('pdfToImage')
   const [files, setFiles] = useState([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState(null)
   const [outputType, setOutputType] = useState('zip')
-
 
   const handleFileDrop = (e) => {
     e.preventDefault()
@@ -57,11 +55,13 @@ function App() {
         preview: null
       }])
     } else {
-      setFiles(prev => [...prev, ...validFiles.map(file => ({
+      // For images, we create previews
+      const filesWithPreviews = validFiles.map(file => ({
         file,
         id: Math.random().toString(36).substr(2, 9),
-        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
-      }))])
+        preview: URL.createObjectURL(file)
+      }))
+      setFiles(prev => [...prev, ...filesWithPreviews])
     }
   }
 
@@ -87,16 +87,17 @@ function App() {
         const pageWidth = pdf.internal.pageSize.getWidth()
         const pageHeight = pdf.internal.pageSize.getHeight()
         if (i > 0) pdf.addPage()
+        
         const ratio = Math.min(pageWidth / img.width, pageHeight / img.height)
         const width = img.width * ratio
         const height = img.height * ratio
         pdf.addImage(imgData, 'JPEG', (pageWidth - width) / 2, (pageHeight - height) / 2, width, height)
         setProgress(Math.round(((i + 1) / files.length) * 100))
       }
-      pdf.save('chkk-images.pdf')
+      pdf.save('chkk-output.pdf')
       triggerConfetti()
     } catch (err) {
-      setError('PDF creation failed. Please try again.')
+      setError('Failed to create PDF. Please try again.')
     } finally {
       setIsProcessing(false)
     }
@@ -147,7 +148,7 @@ function App() {
       }
       triggerConfetti()
     } catch (err) {
-      setError('PDF conversion failed. The file may be protected.')
+      setError('PDF conversion failed.')
     } finally {
       setIsProcessing(false)
     }
@@ -155,10 +156,7 @@ function App() {
 
   const triggerConfetti = () => {
     confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#29b27a', '#2edb8b', '#ffffff']
+      particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#29b27a', '#2edb8b', '#ffffff']
     })
   }
 
@@ -173,43 +171,23 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Sidebar Navigation */}
       <aside className="sidebar">
         <div className="sidebar-logo">
           <Zap className="w-8 h-8 text-[#29b27a]" fill="#29b27a" />
           <span>CHKK AI</span>
         </div>
-        
         <nav>
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-4">
-            Convert Tools
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-4">Tools</div>
+          <div className={`nav-item ${mode === 'pdfToImage' ? 'active' : ''}`} onClick={() => { setMode('pdfToImage'); setFiles([]); setError(null); }}>
+            <FileImage className="w-5 h-5" /> PDF to Images
           </div>
-          <div 
-            className={`nav-item ${mode === 'pdfToImage' ? 'active' : ''}`}
-            onClick={() => { setMode('pdfToImage'); setFiles([]); setError(null); }}
-          >
-            <FileImage className="w-5 h-5" />
-            PDF to Images
-          </div>
-          <div 
-            className={`nav-item ${mode === 'imageToPdf' ? 'active' : ''}`}
-            onClick={() => { setMode('imageToPdf'); setFiles([]); setError(null); }}
-          >
-            <FileStack className="w-5 h-5" />
-            Images to PDF
+          <div className={`nav-item ${mode === 'imageToPdf' ? 'active' : ''}`} onClick={() => { setMode('imageToPdf'); setFiles([]); setError(null); }}>
+            <FileStack className="w-5 h-5" /> Images to PDF
           </div>
         </nav>
-
-        <div className="mt-auto">
-          <div className="px-3 py-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest border-t border-slate-200">
-            CHKK PDF v0.1.0
-          </div>
-        </div>
+        <div className="mt-auto px-3 py-4 text-[10px] text-slate-400 font-bold border-t border-slate-200">CHKK PDF v0.1.1</div>
       </aside>
 
-
-
-      {/* Main Content Workspace */}
       <main className="main-content">
         <div className="header-section">
           <h1>{mode === 'pdfToImage' ? 'Extract images from PDF' : 'Create PDF from images'}</h1>
@@ -217,171 +195,91 @@ function App() {
         </div>
 
         <div className="workspace-card">
-          {/* Output Options for PDF to Image */}
           {mode === 'pdfToImage' && (
             <div className="settings-group mb-8">
               <div className="settings-title">Export Settings</div>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="output" 
-                    checked={outputType === 'zip'} 
-                    onChange={() => setOutputType('zip')}
-                    className="accent-[#29b27a] w-4 h-4"
-                  />
-                  <span className="text-sm font-medium">Download as ZIP (Recommended)</span>
+                  <input type="radio" checked={outputType === 'zip'} onChange={() => setOutputType('zip')} className="accent-[#29b27a] w-4 h-4" />
+                  <span className="text-sm font-medium">Download as ZIP</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="output" 
-                    checked={outputType === 'individual'} 
-                    onChange={() => setOutputType('individual')}
-                    className="accent-[#29b27a] w-4 h-4"
-                  />
+                  <input type="radio" checked={outputType === 'individual'} onChange={() => setOutputType('individual')} className="accent-[#29b27a] w-4 h-4" />
                   <span className="text-sm font-medium">Individual JPGs</span>
                 </label>
               </div>
             </div>
           )}
 
-          {/* Upload Dropzone */}
-          <div 
-            className="dropzone"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={handleFileDrop}
-            onClick={() => document.getElementById('file-input').click()}
-          >
-            <input 
-              id="file-input"
-              type="file" 
-              multiple={mode === 'imageToPdf'} 
-              accept={mode === 'imageToPdf' ? "image/*" : ".pdf"}
-              className="hidden"
-              onChange={handleFileSelect}
-            />
+          <div className="dropzone" onDragOver={(e) => e.preventDefault()} onDrop={handleFileDrop} onClick={() => document.getElementById('file-input').click()}>
+            <input id="file-input" type="file" multiple={mode === 'imageToPdf'} accept={mode === 'imageToPdf' ? "image/*" : ".pdf"} className="hidden" onChange={handleFileSelect} />
             <div className="flex flex-col items-center">
               <div className="w-16 h-16 bg-[#e9f7f1] rounded-full flex items-center justify-center mb-6">
                 <FileUp className="text-[#29b27a] w-8 h-8" />
               </div>
-              <h3 className="text-xl font-bold mb-2">
-                {mode === 'pdfToImage' ? 'Upload your PDF' : 'Upload your images'}
-              </h3>
-              <p className="text-slate-500 max-w-xs mx-auto">
-                Drag and drop your files here, or click to browse from your computer.
-              </p>
+              <h3 className="text-xl font-bold mb-2">{mode === 'pdfToImage' ? 'Upload your PDF' : 'Upload your images'}</h3>
+              <p className="text-slate-500 text-sm">Drag and drop or click to browse</p>
             </div>
           </div>
 
           <AnimatePresence>
             {error && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-6 p-4 rounded-lg bg-red-50 text-red-600 text-sm font-medium flex items-center gap-3 border border-red-100"
-              >
-                <AlertCircle className="w-5 h-5" />
-                {error}
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 p-4 rounded-lg bg-red-50 text-red-600 text-sm font-medium flex items-center gap-3 border border-red-100">
+                <AlertCircle className="w-5 h-5" /> {error}
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* File List */}
           <AnimatePresence>
             {files.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="mt-10"
-              >
-                <div className="flex justify-between items-center mb-4 px-2">
-                  <h4 className="text-sm font-bold text-slate-700">Selected Files ({files.length})</h4>
-                  <button onClick={() => setFiles([])} className="text-xs font-bold text-slate-400 hover:text-red-500">
-                    Clear selection
-                  </button>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-10">
+                <div className="flex justify-between items-center mb-6 px-2">
+                  <h4 className="text-sm font-bold text-slate-700">Selected Items ({files.length})</h4>
+                  <button onClick={() => setFiles([])} className="text-xs font-bold text-slate-400 hover:text-red-500">Clear all</button>
                 </div>
                 
-                <div className="border border-slate-100 rounded-lg overflow-hidden mb-8">
                 {mode === 'imageToPdf' ? (
-                  <Reorder.Group axis="y" values={files} onReorder={setFiles} className="border border-slate-100 rounded-lg overflow-hidden mb-8">
-                    {files.map(f => (
-                      <Reorder.Item key={f.id} value={f} className="file-row cursor-grab active:cursor-grabbing hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center w-full">
-                          <GripVertical className="w-4 h-4 text-slate-300 mr-3 shrink-0" />
-                          <div className="file-row-icon">
-                            {f.preview ? (
-                              <img src={f.preview} className="w-full h-full object-cover rounded" alt="preview" />
-                            ) : (
-                              <FileText className="w-5 h-5" />
-                            )}
+                  <div className="space-y-4">
+                    <p className="text-xs text-slate-400 font-bold mb-4 uppercase tracking-wider">Drag cards to reorder pages</p>
+                    <Reorder.Group axis="y" values={files} onReorder={setFiles} className="space-y-4">
+                      {files.map((f, index) => (
+                        <Reorder.Item key={f.id} value={f} className="page-card !flex-row !items-center !gap-6">
+                          <div className="page-number !relative !top-0 !left-0">{index + 1}</div>
+                          <GripVertical className="w-5 h-5 text-slate-300 shrink-0" />
+                          <div className="w-24 h-32 shrink-0 bg-slate-50 rounded-lg overflow-hidden border border-slate-100">
+                            {f.preview && <img src={f.preview} className="w-full h-full object-cover" alt="preview" />}
                           </div>
-                          <div className="file-row-info">
-                            <div className="file-row-name">{f.file.name}</div>
-                            <div className="file-row-meta">{(f.file.size / 1024 / 1024).toFixed(2)} MB • Drag to reorder</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="page-name !text-left !text-sm !font-bold !text-slate-800">{f.file.name}</div>
+                            <div className="text-[11px] text-slate-400 mt-1 uppercase font-bold tracking-tight">Page {index + 1} • {(f.file.size / 1024 / 1024).toFixed(2)} MB</div>
                           </div>
-                          <button 
-                            onClick={() => removeFile(f.id)}
-                            className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
+                          <button onClick={(e) => { e.stopPropagation(); removeFile(f.id); }} className="remove-page-btn !opacity-100 !relative !top-0 !right-0">
+                            <X className="w-4 h-4" />
                           </button>
-                        </div>
-                      </Reorder.Item>
-                    ))}
-                  </Reorder.Group>
+                        </Reorder.Item>
+                      ))}
+                    </Reorder.Group>
+                  </div>
                 ) : (
-                  <div className="border border-slate-100 rounded-lg overflow-hidden mb-8">
+                  <div className="border border-slate-100 rounded-lg overflow-hidden">
                     {files.map(f => (
                       <div key={f.id} className="file-row">
-                        <div className="file-row-icon">
-                          {f.preview ? (
-                            <img src={f.preview} className="w-full h-full object-cover rounded" alt="preview" />
-                          ) : (
-                            <FileText className="w-5 h-5" />
-                          )}
-                        </div>
+                        <FileText className="w-5 h-5 text-[#29b27a] mr-4" />
                         <div className="file-row-info">
                           <div className="file-row-name">{f.file.name}</div>
                           <div className="file-row-meta">{(f.file.size / 1024 / 1024).toFixed(2)} MB</div>
                         </div>
-                        <button 
-                          onClick={() => removeFile(f.id)}
-                          className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <button onClick={() => removeFile(f.id)} className="p-2 text-slate-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     ))}
                   </div>
                 )}
 
-                </div>
-
-                <div className="flex flex-col items-center">
-                  <button 
-                    disabled={isProcessing}
-                    onClick={mode === 'imageToPdf' ? convertImageToPdf : convertPdfToImage}
-                    className="btn-primary w-full max-w-sm"
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Processing... {progress}%
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="w-5 h-5" fill="currentColor" />
-                        Convert Now
-                      </>
-                    )}
+                <div className="flex flex-col items-center mt-10">
+                  <button disabled={isProcessing} onClick={mode === 'imageToPdf' ? convertImageToPdf : convertPdfToImage} className="btn-primary w-full max-w-sm h-14 text-lg">
+                    {isProcessing ? <><Loader2 className="w-6 h-6 animate-spin" /> Processing... {progress}%</> : <><Zap className="w-6 h-6" fill="currentColor" /> Convert and Download</>}
                   </button>
-                  
-                  {isProcessing && (
-                    <div className="progress-track max-w-sm">
-                      <div className="progress-fill" style={{ width: `${progress}%` }}></div>
-                    </div>
-                  )}
+                  {isProcessing && <div className="progress-track max-w-sm mt-4"><div className="progress-fill" style={{ width: `${progress}%` }}></div></div>}
                 </div>
               </motion.div>
             )}
@@ -389,7 +287,6 @@ function App() {
         </div>
       </main>
     </div>
-
   )
 }
 
