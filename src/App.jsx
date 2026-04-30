@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, Reorder } from 'framer-motion'
 import { 
   FileUp, FileImage, FileStack, Download, X, Loader2, 
   Sparkles, CheckCircle2, AlertCircle, Trash2, 
-  FileText, Settings, LayoutDashboard, History, Zap 
+  FileText, LayoutDashboard, History, Zap, GripVertical 
 } from 'lucide-react'
+
 import confetti from 'canvas-confetti'
 import { jsPDF } from 'jspdf'
 import * as pdfjsLib from 'pdfjs-dist'
@@ -20,7 +21,6 @@ function App() {
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState(null)
   const [outputType, setOutputType] = useState('zip')
-  const [showSettings, setShowSettings] = useState(false)
 
 
   const handleFileDrop = (e) => {
@@ -201,12 +201,12 @@ function App() {
         </nav>
 
         <div className="mt-auto">
-          <div className="nav-item" onClick={() => setShowSettings(true)}>
-            <Settings className="w-5 h-5" />
-            Settings
+          <div className="px-3 py-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest border-t border-slate-200">
+            CHKK PDF v0.1.0
           </div>
         </div>
       </aside>
+
 
 
       {/* Main Content Workspace */}
@@ -303,27 +303,59 @@ function App() {
                 </div>
                 
                 <div className="border border-slate-100 rounded-lg overflow-hidden mb-8">
-                  {files.map(f => (
-                    <div key={f.id} className="file-row">
-                      <div className="file-row-icon">
-                        {f.preview ? (
-                          <img src={f.preview} className="w-full h-full object-cover rounded" alt="preview" />
-                        ) : (
-                          <FileText className="w-5 h-5" />
-                        )}
+                {mode === 'imageToPdf' ? (
+                  <Reorder.Group axis="y" values={files} onReorder={setFiles} className="border border-slate-100 rounded-lg overflow-hidden mb-8">
+                    {files.map(f => (
+                      <Reorder.Item key={f.id} value={f} className="file-row cursor-grab active:cursor-grabbing hover:bg-slate-50 transition-colors">
+                        <div className="flex items-center w-full">
+                          <GripVertical className="w-4 h-4 text-slate-300 mr-3 shrink-0" />
+                          <div className="file-row-icon">
+                            {f.preview ? (
+                              <img src={f.preview} className="w-full h-full object-cover rounded" alt="preview" />
+                            ) : (
+                              <FileText className="w-5 h-5" />
+                            )}
+                          </div>
+                          <div className="file-row-info">
+                            <div className="file-row-name">{f.file.name}</div>
+                            <div className="file-row-meta">{(f.file.size / 1024 / 1024).toFixed(2)} MB • Drag to reorder</div>
+                          </div>
+                          <button 
+                            onClick={() => removeFile(f.id)}
+                            className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </Reorder.Item>
+                    ))}
+                  </Reorder.Group>
+                ) : (
+                  <div className="border border-slate-100 rounded-lg overflow-hidden mb-8">
+                    {files.map(f => (
+                      <div key={f.id} className="file-row">
+                        <div className="file-row-icon">
+                          {f.preview ? (
+                            <img src={f.preview} className="w-full h-full object-cover rounded" alt="preview" />
+                          ) : (
+                            <FileText className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div className="file-row-info">
+                          <div className="file-row-name">{f.file.name}</div>
+                          <div className="file-row-meta">{(f.file.size / 1024 / 1024).toFixed(2)} MB</div>
+                        </div>
+                        <button 
+                          onClick={() => removeFile(f.id)}
+                          className="p-2 text-slate-300 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
-                      <div className="file-row-info">
-                        <div className="file-row-name">{f.file.name}</div>
-                        <div className="file-row-meta">{(f.file.size / 1024 / 1024).toFixed(2)} MB</div>
-                      </div>
-                      <button 
-                        onClick={() => removeFile(f.id)}
-                        className="p-2 text-slate-300 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                )}
+
                 </div>
 
                 <div className="flex flex-col items-center">
@@ -356,49 +388,6 @@ function App() {
           </AnimatePresence>
         </div>
       </main>
-
-      {/* Settings Modal */}
-      <AnimatePresence>
-        {showSettings && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200"
-            >
-              <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <h3 className="font-bold text-slate-800">Application Settings</h3>
-                <button onClick={() => setShowSettings(false)} className="p-1 hover:bg-slate-200 rounded-full transition-colors">
-                  <X className="w-5 h-5 text-slate-500" />
-                </button>
-              </div>
-              <div className="p-6 space-y-6">
-                <div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Preferences</div>
-                  <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                    <span className="text-sm font-medium text-slate-700">Dark Mode</span>
-                    <span className="text-xs text-slate-400 font-bold">Coming Soon</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">System</div>
-                  <button 
-                    onClick={() => { setFiles([]); setShowSettings(false); }}
-                    className="w-full flex items-center justify-between p-3 hover:bg-red-50 rounded-lg text-red-500 transition-colors group"
-                  >
-                    <span className="text-sm font-medium">Clear All Application Data</span>
-                    <Trash2 className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                </div>
-              </div>
-              <div className="p-4 bg-slate-50 border-t border-slate-100 text-center">
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">CHKK PDF Tool v0.1.0</p>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
 
   )
