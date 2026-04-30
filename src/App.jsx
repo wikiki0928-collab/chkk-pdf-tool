@@ -211,16 +211,30 @@ function App() {
             </div>
           )}
 
-          <div className="dropzone" onDragOver={(e) => e.preventDefault()} onDrop={handleFileDrop} onClick={() => document.getElementById('file-input').click()}>
-            <input id="file-input" type="file" multiple={mode === 'imageToPdf'} accept={mode === 'imageToPdf' ? "image/*" : ".pdf"} className="hidden" onChange={handleFileSelect} />
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-[#e9f7f1] rounded-full flex items-center justify-center mb-6">
-                <FileUp className="text-[#29b27a] w-8 h-8" />
+          {!files.length ? (
+            <div className="dropzone" onDragOver={(e) => e.preventDefault()} onDrop={handleFileDrop} onClick={() => document.getElementById('file-input').click()}>
+              <input id="file-input" type="file" multiple={mode === 'imageToPdf'} accept={mode === 'imageToPdf' ? "image/*" : ".pdf"} className="hidden" onChange={handleFileSelect} />
+              <div className="flex flex-col items-center">
+                <div className="w-16 h-16 bg-[#e9f7f1] rounded-full flex items-center justify-center mb-6">
+                  <FileUp className="text-[#29b27a] w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">{mode === 'pdfToImage' ? 'Upload your PDF' : 'Upload your images'}</h3>
+                <p className="text-slate-500 text-sm">Drag and drop or click to browse</p>
               </div>
-              <h3 className="text-xl font-bold mb-2">{mode === 'pdfToImage' ? 'Upload your PDF' : 'Upload your images'}</h3>
-              <p className="text-slate-500 text-sm">Drag and drop or click to browse</p>
             </div>
-          </div>
+          ) : mode === 'imageToPdf' && (
+            <div className="flex justify-center mb-8">
+              <button 
+                onClick={() => document.getElementById('file-input').click()}
+                className="flex items-center gap-2 px-6 py-3 bg-slate-50 hover:bg-slate-100 border border-dashed border-slate-300 rounded-xl text-slate-600 text-sm font-bold transition-all"
+              >
+                <FileUp className="w-4 h-4" />
+                Add More Images
+                <input id="file-input" type="file" multiple accept="image/*" className="hidden" onChange={handleFileSelect} />
+              </button>
+            </div>
+          )}
+
 
           <AnimatePresence>
             {error && (
