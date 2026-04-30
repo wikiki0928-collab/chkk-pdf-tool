@@ -9,13 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "jspdf": "^2.5.1",
-    "pdfjs-dist": "^4.0.379",
+    "canvas-confetti": "^1.9.2",
     "framer-motion": "^11.0.8",
+    "jspdf": "^2.5.1",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.344.0",
-    "canvas-confetti": "^1.9.2"
+    "pdfjs-dist": "^4.0.379",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",

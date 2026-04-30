@@ -4,6 +4,7 @@ import { FileUp, FileImage, FileStack, Download, X, Loader2, Sparkles, CheckCirc
 import confetti from 'canvas-confetti'
 import { jsPDF } from 'jspdf'
 import * as pdfjsLib from 'pdfjs-dist'
+import JSZip from 'jszip'
 
 // Set up PDF.js worker using a reliable CDN for v4+
 // pdfjs-dist 4.x uses .mjs for the worker
@@ -15,6 +16,7 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState(null)
+  const [outputType, setOutputType] = useState('zip') // 'individual' or 'zip'
 
   const handleFileDrop = (e) => {
     e.preventDefault()
@@ -111,13 +113,15 @@ function App() {
       const fileObj = files[0]
       const arrayBuffer = await fileObj.file.arrayBuffer()
       
+      const zip = outputType === 'zip' ? new JSZip() : null
+      
       // Load PDF
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
       const pdf = await loadingTask.promise
       
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i)
-        const viewport = page.getViewport({ scale: 2.5 }) // Higher scale for better quality
+        const viewport = page.getViewport({ scale: 2.5 })
         const canvas = document.createElement('canvas')
         const context = canvas.getContext('2d')
         canvas.height = viewport.height
@@ -131,12 +135,28 @@ function App() {
         await page.render(renderContext).promise
         
         const imgData = canvas.toDataURL('image/jpeg', 0.95)
-        const link = document.createElement('a')
-        link.href = imgData
-        link.download = `${fileObj.file.name.replace('.pdf', '')}-page-${i}.jpg`
-        link.click()
+        const fileName = `${fileObj.file.name.replace('.pdf', '')}-page-${i}.jpg`
+
+        if (outputType === 'zip') {
+          // Remove the data URL prefix to get raw base64
+          const base64Data = imgData.split(',')[1]
+          zip.file(fileName, base64Data, { base64: true })
+        } else {
+          const link = document.createElement('a')
+          link.href = imgData
+          link.download = fileName
+          link.click()
+        }
         
         setProgress(Math.round((i / pdf.numPages) * 100))
+      }
+
+      if (outputType === 'zip') {
+        const content = await zip.generateAsync({ type: 'blob' })
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(content)
+        link.download = `${fileObj.file.name.replace('.pdf', '')}-images.zip`
+        link.click()
       }
 
       confetti({
@@ -195,6 +215,34 @@ function App() {
             PDF to Images
           </button>
         </div>
+
+        {/* Output Options for PDF to Image */}
+        <AnimatePresence>
+          {mode === 'pdfToImage' && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-8 flex flex-col items-center gap-4"
+            >
+              <div className="text-sm font-bold text-slate-400 uppercase tracking-widest">Select Output Format</div>
+              <div className="flex gap-4 p-1 bg-white/50 border border-slate-200 rounded-xl shadow-sm">
+                <button 
+                  onClick={() => setOutputType('zip')}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${outputType === 'zip' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                  Download ZIP (Recommended)
+                </button>
+                <button 
+                  onClick={() => setOutputType('individual')}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${outputType === 'individual' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                  Individual JPGs
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Upload Zone */}
         <div className="glass-panel">
